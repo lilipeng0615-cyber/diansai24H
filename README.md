@@ -1,6 +1,4 @@
-# MSPM0G3507 智能小车固件（2024 全国大学生电子设计竞赛 H 题）
-
-基于 **TI MSPM0G3507** 的智能小车嵌入式固件工程，面向 **2024 年全国大学生电子设计竞赛 H 题（自动行驶小车）**。
+基于 **TI MSPM0G3507** 的小车嵌入式固件工程，面向 **2024 年全国大学生电子设计竞赛 H 题（自动行驶小车）**。
 
 项目集成了 **ICM42688** 惯性测量单元与 **VQF** 6 轴四元数姿态解算、8 路模拟多路复用灰度巡线与现场白/黑校准、外部中断编码器测速与里程计、双轮速度环 + 转向/航向串级 PID 控制、**ST7735** SPI LCD 调试屏、四任务状态机（支持 `StartYaw` 基准航向锚定与里程保护），以及 **VOFA+** 实时波形监控与在线 PID 调参功能。
 
@@ -29,11 +27,11 @@
 ## 1. 开发环境与工具链
 
 - **主控芯片**：TI `MSPM0G3507`（LQFP-64，主频 80 MHz）
-- **MSPM0 SDK**：`2.10.00.04`（默认路径：`C:\ti\mspm0_sdk_2_10_00_04`）
-- **SysConfig**：`1.28.0`（用于编辑 `M0.syscfg` 并生成底层配置）
+- **MSPM0 SDK**
+- **SysConfig**
 - **构建方式（二选一）**：
   - **Keil MDK（ARMCLANG V6）**：打开 `keil/M0.uvprojx`
-  - **VS Code + CMake + Ninja + ARM GCC + OpenOCD**：使用 `CMakeLists.txt`、`CMakePresets.json`（`gcc` 预设）与 `openocd.cfg`（CMSIS-DAP / DAPLink SWD 烧录）
+  - **VS Code + CMake + Ninja + ARM GCC + OpenOCD**：使用 `CMakeLists.txt`、`CMakePresets.json`（`gcc` 预设）与 `openocd.cfg`（CMSIS-DAP / DAPLink SWD 烧录）建议使用方式2
 
 ---
 
