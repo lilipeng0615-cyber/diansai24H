@@ -18,6 +18,7 @@ add_executable(M0
     ${APPLY_SRC}
     ${TASK_SRC}
     ${SDK}/source/ti/devices/msp/m0p/startup_system_files/gcc/startup_mspm0g350x_gcc.c
+    Algorithm/pid.h
 )
 
 target_compile_definitions(M0 PRIVATE

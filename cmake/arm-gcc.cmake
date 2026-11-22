@@ -8,6 +8,9 @@ set(CMAKE_ASM_COMPILER "${TOOLCHAIN_ROOT}/bin/arm-none-eabi-gcc.exe")
 set(CMAKE_OBJCOPY      "${TOOLCHAIN_ROOT}/bin/arm-none-eabi-objcopy.exe")
 set(CMAKE_SIZE         "${TOOLCHAIN_ROOT}/bin/arm-none-eabi-size.exe")
 
+# 汇编语言也要带上目标架构，否则 .s/.S 会按宿主默认架构汇编
+set(CMAKE_ASM_FLAGS "-mcpu=cortex-m0plus -mthumb")
+
 set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
 
 set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)

@@ -1,4 +1,4 @@
-﻿/**
+/**
   ****************************(C) COPYRIGHT 2016 DJI****************************
   * @file       pid.c/h
   * @brief      pidʵ�ֺ�����������ʼ����PID���㺯����
@@ -18,7 +18,8 @@
 #define PID_H
 
 #include "databyte.h"
-#include "headfile.h"
+
+
 enum PID_MODE
 {
     PID_POSITION = 0,

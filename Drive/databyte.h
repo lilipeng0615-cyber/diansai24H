@@ -1,7 +1,7 @@
 #ifndef __DATABYTE_H
 #define __DATABYTE_H
 
-#include "ti_msp_dl_config.h"
+
 #include <stdint.h>
 
 /* 基础整数类型别名 */
@@ -34,25 +34,15 @@ typedef double fp64;                 /* 64 位浮点数 */
 #define MAX_DATA_LEN 256                         /* 串口数据帧最大有效数据长度 */
 
 //vofa定义
-#define VOFA_CHANNEL_COUNT  10
+#define VOFA_CHANNEL_COUNT  6
 #define VOFA_FRAME_TAIL_SIZE 4
 #define VOFA_CMD_FRAME_SIZE 11
-
-
-//采样周期，20ms一次IMU解算，30msvofa发送数据，50ms灰度采样
-#define GRAY_UPDATE_PERIOD_MS (50)
-#define IMU_UPDATE_PERIOD_US  (20000)
-#define EULER_VOFA_PERIOD_US  (30000)
-
-
 
 //vofa数据枚举
 typedef enum {
     VOFA_PID_LEFT  = 'L',//左轮速度环
     VOFA_PID_RIGHT = 'R',//右轮速度环
-    VOFA_PID_SPEED = 'S',//左右轮速度环
-    VOFA_PID_TURN  = 'T',//灰度巡线转向环
-    VOFA_PID_YAW   = 'Y' //航向保持转向环
+    VOFA_PID_SPEED = 'S' //左右轮速度环
 } VofaPidTarget_t;
 
 typedef enum {
@@ -180,24 +170,6 @@ typedef struct {
     float y;                                     /* Y 轴数值 */
     float z;                                     /* Z 轴数值 */
 } Axis3f;
-
-/* Mahony 四元数姿态滤波器状态 */
-typedef struct {
-    float Kp;                                    /* 比例反馈增益 */
-    float Ki;                                    /* 积分反馈增益 */
-    float dt;                                    /* 姿态更新周期，单位 s */
-    float q0;                                    /* 四元数实部 */
-    float q1;                                    /* 四元数 X 轴虚部 */
-    float q2;                                    /* 四元数 Y 轴虚部 */
-    float q3;                                    /* 四元数 Z 轴虚部 */
-    float exInt;                                 /* X 轴误差积分 */
-    float eyInt;                                 /* Y 轴误差积分 */
-    float ezInt;                                 /* Z 轴误差积分 */
-    float rMat[3][3];                            /* 由四元数计算得到的旋转矩阵 */
-    float roll;                                  /* 横滚角，单位 rad */
-    float pitch;                                 /* 俯仰角，单位 rad */
-    float yaw;                                   /* 偏航角，单位 rad */
-} Mahony_t;
 
 /* ICM42688 传感器数据和状态 */
 typedef struct {

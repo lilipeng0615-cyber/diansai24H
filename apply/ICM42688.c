@@ -1,4 +1,4 @@
-#include "ICM42688.h"
+#include "headfile.h"
 
 
 #define ICM42688_REG_DEVICE_CONFIG       0x11U
@@ -33,9 +33,6 @@
 #define ICM42688_ACCEL_AAF_42HZ_CONFIG   0x02U
 
 #define ICM42688_RAW_SATURATION_LIMIT    32000
-#define ICM42688_STATIC_GYRO_LIMIT       0.035f
-#define ICM42688_STATIC_ACCEL_MIN        8.80f
-#define ICM42688_STATIC_ACCEL_MAX        10.80f
 #define ICM42688_CALIBRATION_RETRIES     3U
 #define ICM42688_CALIBRATION_SAMPLE_MS   20U
 #define ICM42688_CALIB_ACCEL_SPAN_LIMIT  0.80f
@@ -308,22 +305,4 @@ void ICM42688_CalibrateGyro(uint16_t samples)
     for (uint8_t axis = 0U; axis < 3U; axis++) {
         ICM42688.GyroOffset[axis] = saved_offset[axis];
     }
-}
-
-void ICM42688_UpdateStaticGyroBias(float alpha)
-{
-    float acc_norm = icm42688_accel_norm(&ICM42688);
-
-    if ((acc_norm < ICM42688_STATIC_ACCEL_MIN) || (acc_norm > ICM42688_STATIC_ACCEL_MAX)) {
-        return;
-    }
-    if ((icm42688_absf(ICM42688.Gyro[0]) > ICM42688_STATIC_GYRO_LIMIT) ||
-        (icm42688_absf(ICM42688.Gyro[1]) > ICM42688_STATIC_GYRO_LIMIT) ||
-        (icm42688_absf(ICM42688.Gyro[2]) > ICM42688_STATIC_GYRO_LIMIT)) {
-        return;
-    }
-
-    ICM42688.GyroOffset[0] += ICM42688.Gyro[0] * alpha;
-    ICM42688.GyroOffset[1] += ICM42688.Gyro[1] * alpha;
-    ICM42688.GyroOffset[2] += ICM42688.Gyro[2] * alpha;
 }

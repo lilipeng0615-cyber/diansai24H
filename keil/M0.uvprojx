@@ -535,16 +535,6 @@
           <GroupName>Algorithm</GroupName>
           <Files>
             <File>
-              <FileName>mahony_filter.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Algorithm\mahony_filter.c</FilePath>
-            </File>
-            <File>
-              <FileName>mahony_filter.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\Algorithm\mahony_filter.h</FilePath>
-            </File>
-            <File>
               <FileName>imu_attitude.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\Algorithm\imu_attitude.c</FilePath>
@@ -555,24 +545,14 @@
               <FilePath>..\Algorithm\imu_attitude.h</FilePath>
             </File>
             <File>
-              <FileName>kalman_filter.c</FileName>
+              <FileName>vqf_filter.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\Algorithm\kalman_filter.c</FilePath>
+              <FilePath>..\Algorithm\vqf_filter.c</FilePath>
             </File>
             <File>
-              <FileName>kalman_filter.h</FileName>
+              <FileName>vqf_filter.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Algorithm\kalman_filter.h</FilePath>
-            </File>
-            <File>
-              <FileName>QuaternionEKF.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Algorithm\QuaternionEKF.c</FilePath>
-            </File>
-            <File>
-              <FileName>QuaternionEKF.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\Algorithm\QuaternionEKF.h</FilePath>
+              <FilePath>..\Algorithm\vqf_filter.h</FilePath>
             </File>
           </Files>
         </Group>

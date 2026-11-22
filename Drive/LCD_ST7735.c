@@ -1,10 +1,5 @@
-#include "LCD_ST7735.h"
-#include "Delay.h"
-#include "spi.h"
+#include "headfile.h"
 #include "lcdfont.h"
-#include "imu_attitude.h"
-#include <stdio.h>
-#include <string.h>
 
 #define LCD_DC_LOW()      DL_GPIO_clearPins(DC_PORT, DC_PIN_11_PIN)
 #define LCD_DC_HIGH()     DL_GPIO_setPins(DC_PORT, DC_PIN_11_PIN)
@@ -596,7 +591,7 @@ void LCD_DebugInit(void)
 
 void LCD_DebugUpdate(Car_t Car)
 {
-    char line[17];
+    char line[32];
     uint16_t color = LCD_WHITE;
     uint8_t row;
     uint8_t checked;

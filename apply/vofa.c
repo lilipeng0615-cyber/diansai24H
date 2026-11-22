@@ -1,4 +1,4 @@
-#include "vofa.h"
+#include "headfile.h"
 
 
 VofaCommand_t vofa_command;
@@ -179,12 +179,6 @@ static Pid_t *Vofa_GetPid(uint8_t target)
         case VOFA_PID_RIGHT:
             return vofa_motors->Right;
 
-        case VOFA_PID_TURN:
-            return vofa_motors->PidSelfTurn;
-
-        case VOFA_PID_YAW:
-            return vofa_motors->PidYaw;
-
         default:
             return NULL;
     }
@@ -342,9 +336,7 @@ void Vofa_SendJustFloat(void)
 
     if ((vofa_motors == NULL) ||
         (vofa_motors->Left == NULL) ||
-        (vofa_motors->Right == NULL) ||
-        (vofa_motors->PidSelfTurn == NULL) ||
-        (vofa_motors->PidYaw == NULL)) {
+        (vofa_motors->Right == NULL)) {
         return;
     }
 
@@ -355,13 +347,7 @@ void Vofa_SendJustFloat(void)
 
         vofa_motors->Right->set,
         vofa_motors->Right->fdb,
-        vofa_motors->Right->out,
-
-        vofa_motors->PidSelfTurn->error[0],
-        vofa_motors->PidSelfTurn->out,
-
-        vofa_motors->PidYaw->error[0],
-        vofa_motors->PidYaw->out
+        vofa_motors->Right->out
     };
 
     static const uint8_t tail[4] = {

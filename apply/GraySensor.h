@@ -2,7 +2,6 @@
 #define  __GRAYSENSOR_H
 
 #include "databyte.h"
-#include "headfile.h"
 
 void GraySensorInit(GraySensor_t** GraySensor);
 void GraySensor_RecalcNorm(GraySensor_t* GraySensor);

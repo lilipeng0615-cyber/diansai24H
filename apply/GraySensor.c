@@ -1,4 +1,4 @@
-#include "GraySensor.h"
+#include "headfile.h"
 
 void GraySensor_RecalcNorm(GraySensor_t* GraySensor)
 {

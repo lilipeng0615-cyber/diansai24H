@@ -1,4 +1,4 @@
-#include "Time.h"
+#include "headfile.h"
 
 volatile uint8 imuflag = 0;
 volatile uint8 controlflag = 0;
@@ -6,7 +6,7 @@ volatile uint8 vofaflag = 0;
 
 void Time_Init(void)
 {
-    /* TIMER_0 (TIMG0): 10ms -> 100Hz IMU update */
+    /* TIMER_0 (TIMG0): 10ms 中断 2 分频 -> 20ms (50Hz) IMU update */
     DL_TimerG_clearInterruptStatus(TIMER_0_INST, DL_TIMERG_INTERRUPT_ZERO_EVENT);
     DL_TimerG_enableInterrupt(TIMER_0_INST, DL_TIMERG_INTERRUPT_ZERO_EVENT);
     NVIC_ClearPendingIRQ(TIMER_0_INST_INT_IRQN);
@@ -28,12 +28,18 @@ void Time_Init(void)
     DL_TimerA_startCounter(TIMER_2_INST);
 }
 
-/* 10ms -> 100Hz IMU */
+/* 10ms 中断 2 分频 -> 20ms (50Hz) IMU */
 void TIMER_0_INST_IRQHandler(void)
 {
+    static uint8_t imu_div = 0U;
+
     switch (DL_TimerG_getPendingInterrupt(TIMER_0_INST)) {
         case DL_TIMERG_IIDX_ZERO:
-            imuflag = 1;
+            imu_div++;
+            if (imu_div >= 2U) {
+                imu_div = 0U;
+                imuflag = 1;
+            }
             break;
         default:
             break;

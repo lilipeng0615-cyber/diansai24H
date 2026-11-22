@@ -1,8 +1,7 @@
 #ifndef __KEY_H
 #define __KEY_H
 
-#include "databyte.h"
-#include "headfile.h"
+#include <stdint.h>
 
 #define KEY_COUNT       3
 

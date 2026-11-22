@@ -1,8 +1,7 @@
-﻿#ifndef __ICM42688_H
+#ifndef __ICM42688_H
 #define __ICM42688_H
 
 #include "databyte.h"
-#include "headfile.h"
 
 #define ICM42688_CHIP_ID_VALUE      0x47U
 
@@ -15,7 +14,6 @@ uint8_t ICM42688_Init(void);
 uint8_t ICM42688_ReadID(void);
 void ICM42688_Read(ICM42688_t *imu);
 void ICM42688_CalibrateGyro(uint16_t samples);
-void ICM42688_UpdateStaticGyroBias(float alpha);
 
 #endif
 

@@ -1,144 +1,106 @@
-#include "imu_attitude.h"
+#include "headfile.h"
 
-
-
-#define IMU_MAHONY_KP          0.20f
-#define IMU_MAHONY_KI          0.0f
-#define IMU_STATIC_BIAS_ALPHA  0.0008f
-#define IMU_DEFAULT_DT         0.010f
-#define IMU_MAX_VALID_DT       0.100f
-#define IMU_GRAVITY            9.80665f
-#define IMU_ACCEL_GATE         1.0f
-#define IMU_STATIC_RATE_LIMIT  0.040f
+#define IMU_NOMINAL_DT            0.020f
+#define IMU_MAX_VALID_DT          0.100f
 #define IMU_INITIAL_ALIGN_SAMPLES 50U
-#define IMU_SENSOR_SAMPLE_MS   20U
-#define IMU_ACCEL_GATE_MIN_SQ  ((IMU_GRAVITY - IMU_ACCEL_GATE) * \
-                                (IMU_GRAVITY - IMU_ACCEL_GATE))
-#define IMU_ACCEL_GATE_MAX_SQ  ((IMU_GRAVITY + IMU_ACCEL_GATE) * \
-                                (IMU_GRAVITY + IMU_ACCEL_GATE))
-#define IMU_STATIC_RATE_MAX_SQ (IMU_STATIC_RATE_LIMIT * IMU_STATIC_RATE_LIMIT)
+#define IMU_SENSOR_SAMPLE_MS      20U
 
 IMU_Attitude_t IMU_Attitude;
-static Mahony_t mahony;
+static VQF_t vqf;
 static float yaw_last;
 static uint8_t static_bias_enable = 1U;
 
-void IMU_Attitude_SetStaticBiasEnable(uint8_t enable)
-{
-    static_bias_enable = (enable != 0U) ? 1U : 0U;
-}
-
-static float vector_norm_sq(Axis3f value)
-{
-    return value.x * value.x + value.y * value.y + value.z * value.z;
-}
-
-static uint8_t accel_correction_is_trustworthy(Axis3f gyro, Axis3f acc)
-{
-    float accel_norm_sq = vector_norm_sq(acc);
-
-    if ((ICM42688.LastAccelSaturated != 0U) ||
-        (accel_norm_sq < IMU_ACCEL_GATE_MIN_SQ) ||
-        (accel_norm_sq > IMU_ACCEL_GATE_MAX_SQ) ||
-        (vector_norm_sq(gyro) > IMU_STATIC_RATE_MAX_SQ)) {
-        return 0U;
-    }
-
-    return 1U;
-}
-
 static float wrap_pi(float angle)
 {
-    while (angle > 3.1415926f) {
-        angle -= 6.2831852f;
+    while (angle > PI) {
+        angle -= 2.0f * PI;
     }
-    while (angle < -3.1415926f) {
-        angle += 6.2831852f;
+    while (angle < -PI) {
+        angle += 2.0f * PI;
     }
     return angle;
 }
 
+void IMU_Attitude_SetStaticBiasEnable(uint8_t enable)
+{
+    uint8_t next = (enable != 0U) ? 1U : 0U;
+    if (static_bias_enable != next) {
+        static_bias_enable = next;
+        VQF_SetBiasEstimationEnable(&vqf, true, (static_bias_enable != 0U));
+    }
+}
+
 void IMU_Attitude_Init(void)
 {
-    Axis3f acc = {0.0f, 0.0f, 0.0f};
+    VQF_Param_t param;
+    float acc_avg[3] = {0.0f, 0.0f, 0.0f};
+    uint16_t valid_samples = 0U;
 
     memset(&IMU_Attitude, 0, sizeof(IMU_Attitude));
-    Mahony_Init(&mahony, IMU_MAHONY_KP, IMU_MAHONY_KI, IMU_DEFAULT_DT);
 
-    /* Average one second of 50 Hz samples for a stable initial tilt. */
+    VQF_DefaultParam(&param);
+    param.motion_bias_est_enabled = true;
+    param.rest_bias_est_enabled = (static_bias_enable != 0U);
+    VQF_Init(&vqf, &param, IMU_NOMINAL_DT, IMU_NOMINAL_DT);
+
+    /* 上电静止采样约 1s 取平均重力方向，完成初始倾角快速对齐 */
     for (uint16_t sample = 0U; sample < IMU_INITIAL_ALIGN_SAMPLES; sample++) {
         ICM42688_Read(&ICM42688);
-        acc.x += ICM42688.Accel[0];
-        acc.y += ICM42688.Accel[1];
-        acc.z += ICM42688.Accel[2];
+        if (ICM42688.LastAccelSaturated == 0U) {
+            acc_avg[0] += ICM42688.Accel[0];
+            acc_avg[1] += ICM42688.Accel[1];
+            acc_avg[2] += ICM42688.Accel[2];
+            valid_samples++;
+        }
         delay_ms(IMU_SENSOR_SAMPLE_MS);
     }
-    acc.x /= (float)IMU_INITIAL_ALIGN_SAMPLES;
-    acc.y /= (float)IMU_INITIAL_ALIGN_SAMPLES;
-    acc.z /= (float)IMU_INITIAL_ALIGN_SAMPLES;
-    Mahony_SetFromAccel(&mahony, acc);
 
-    IMU_Attitude.q[0] = mahony.q0;
-    IMU_Attitude.q[1] = mahony.q1;
-    IMU_Attitude.q[2] = mahony.q2;
-    IMU_Attitude.q[3] = mahony.q3;
-    IMU_Attitude.Roll = mahony.roll;
-    IMU_Attitude.Pitch = mahony.pitch;
-    IMU_Attitude.Yaw = wrap_pi(mahony.yaw);
+    if (valid_samples > 0U) {
+        acc_avg[0] /= (float)valid_samples;
+        acc_avg[1] /= (float)valid_samples;
+        acc_avg[2] /= (float)valid_samples;
+        VQF_UpdateAccel(&vqf, acc_avg);
+    }
+
+    VQF_GetQuat6D(&vqf, IMU_Attitude.q);
+    VQF_GetEulerZYX(&vqf, &IMU_Attitude.Roll, &IMU_Attitude.Pitch, &IMU_Attitude.Yaw);
+    IMU_Attitude.Yaw = wrap_pi(IMU_Attitude.Yaw);
     IMU_Attitude.YawTotalAngle = 0.0f;
+    IMU_Attitude.YawRoundCount = 0;
     yaw_last = IMU_Attitude.Yaw;
 }
 
 void IMU_Attitude_Update(float dt)
 {
-    Axis3f gyro;
-    Axis3f acc;
     float yaw_delta;
 
-    if (dt <= 0.0f || dt > IMU_MAX_VALID_DT) {
-        dt = IMU_DEFAULT_DT;
+    if ((dt <= 0.0f) || (dt > IMU_MAX_VALID_DT)) {
+        dt = IMU_NOMINAL_DT;
     }
 
     ICM42688_Read(&ICM42688);
-    if (static_bias_enable != 0U) {
-        ICM42688_UpdateStaticGyroBias(IMU_STATIC_BIAS_ALPHA);
-    }
 
     if (ICM42688.LastGyroSaturated != 0U) {
         return;
     }
 
-    gyro.x = ICM42688.Gyro[0];
-    gyro.y = ICM42688.Gyro[1];
-    gyro.z = ICM42688.Gyro[2];
-    acc.x = ICM42688.Accel[0];
-    acc.y = ICM42688.Accel[1];
-    acc.z = ICM42688.Accel[2];
-
-    mahony.dt = dt;
-    if (accel_correction_is_trustworthy(gyro, acc) != 0U) {
-        Mahony_Update(&mahony, gyro, acc);
-    } else {
-        /* Dynamic acceleration is not gravity; integrate the gyro only. */
-        Mahony_UpdateGyroOnly(&mahony, gyro);
+    VQF_UpdateGyro(&vqf, ICM42688.Gyro, dt);
+    if (ICM42688.LastAccelSaturated == 0U) {
+        VQF_UpdateAccel(&vqf, ICM42688.Accel);
     }
 
-    IMU_Attitude.q[0] = mahony.q0;
-    IMU_Attitude.q[1] = mahony.q1;
-    IMU_Attitude.q[2] = mahony.q2;
-    IMU_Attitude.q[3] = mahony.q3;
-    IMU_Attitude.Roll = mahony.roll;
-    IMU_Attitude.Pitch = mahony.pitch;
-    IMU_Attitude.Yaw = wrap_pi(mahony.yaw);
+    VQF_GetQuat6D(&vqf, IMU_Attitude.q);
+    VQF_GetEulerZYX(&vqf, &IMU_Attitude.Roll, &IMU_Attitude.Pitch, &IMU_Attitude.Yaw);
+    IMU_Attitude.Yaw = wrap_pi(IMU_Attitude.Yaw);
 
     yaw_delta = IMU_Attitude.Yaw - yaw_last;
-    if (yaw_delta > 3.1415926f) {
+    if (yaw_delta > PI) {
         IMU_Attitude.YawRoundCount--;
-    } else if (yaw_delta < -3.1415926f) {
+    } else if (yaw_delta < -PI) {
         IMU_Attitude.YawRoundCount++;
     }
 
-    /* Accumulate the shortest angular change so crossing +/-pi is continuous. */
+    /* 累计最短角度增量，跨越 +/-pi 时保持航向角连续 */
     IMU_Attitude.YawTotalAngle += wrap_pi(yaw_delta);
     yaw_last = IMU_Attitude.Yaw;
 }

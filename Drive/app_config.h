@@ -5,12 +5,6 @@
 #define PI 3.14159265358979323846f
 #endif
 
-/*
- * 0: 正常比赛/任务模式 (TIMER_0 100Hz IMU, TIMER_1 50Hz 控制, TIMER_2 20Hz VOFA JustFloat)
- * 1: 桌面传感器调试模式 (仅轮询 IMU + FireWater 欧拉角 + 灰度 + LCD，不启动电机任务)
- */
-#define APP_BENCH_DEBUG_MODE    0
-
 /* 电机速度环 PID 参数 */
 #define BrushMotor_PID_mode     PID_POSITION
 #define BrushMotor_PID_KP       10.0f
@@ -38,8 +32,10 @@
 /* 编码器与轮子机械参数 (控制周期 20ms -> 50Hz) */
 #define EncoderReadingFrequency 50.0f
 #define EncoderLines            390.0f
-#define TireRadius              6.5f
+#define TireRadius              6.5f    /* 轮胎半径 (cm)，请按实车核对是否误填成直径 */
+#define WheelTrack              15.0f   /* 左右两轮中心距 (cm)，请按实车测量修改 */
 #define ENCODER_VEL_LPF_ALPHA   0.4f
+#define ENCODER_VEL_DEADBAND    0.05f   /* 角速度低通拖尾清零死区 (rad/s) */
 
 /* 灰度传感器模拟开关切换稳定延时 (us) */
 #define GRAYSENSOR_MUX_SETTLE_US 10U

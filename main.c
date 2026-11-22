@@ -6,27 +6,14 @@ extern volatile uint8 controlflag;
 extern volatile uint8 vofaflag;
 
 static uint32_t lcd_last_ms;
-static uint32_t gray_last_ms;
-static uint32_t imu_update_last_us;
-static uint32_t euler_vofa_last_us;
 static uint8_t imu_status = ICM42688_NO_SENSOR;
 
-void duty_100hz(void)
+void duty_imu_50hz(void)
 {
     static uint32_t last_tick;
     static uint8_t initialized;
     uint32_t now_tick = micros();
     float dt;
-
-    if (imu_status != ICM42688_NO_ERROR) {
-        return;
-    }
-
-    if (initialized == 0U) {
-        last_tick = now_tick;
-        initialized = 1U;
-        return;
-    }
 
     dt = (float)(now_tick - last_tick) * 0.000001f;
     last_tick = now_tick;
@@ -72,60 +59,24 @@ int main(void)
     BeepInit(&car.buzzer);
     imu_status = ICM42688_Init();
     Task_Init(&car.task);
-    if (imu_status == ICM42688_NO_ERROR) {
-        IMU_Attitude_Init();
-    }
+    
+    IMU_Attitude_Init();
+    
     car.IMU = &IMU_Attitude;
 
     LCD_Init();
     LCD_Clear(LCD_BLACK);
     LCD_DebugInit();
     LCD_ShowBootStatus(imu_status);
-    if (imu_status != ICM42688_NO_ERROR) {
-        BuzzerBee(car.buzzer);
-    }
+   
 
-    imu_update_last_us = micros();
-    euler_vofa_last_us = imu_update_last_us;
-    gray_last_ms = imu_update_last_us / 1000U;
-    lcd_last_ms = gray_last_ms;
-
-#if (APP_BENCH_DEBUG_MODE == 0)
+    lcd_last_ms = millis();
     Time_Init();
-#endif
 
     while (1) {
-#if (APP_BENCH_DEBUG_MODE != 0)
-        uint32_t now_us = micros();
-        uint32_t now_ms = now_us / 1000U;
-
-        if ((imu_status == ICM42688_NO_ERROR) &&
-            ((uint32_t)(now_us - imu_update_last_us) >= IMU_UPDATE_PERIOD_US)) {
-            float dt = (float)(now_us - imu_update_last_us) * 0.000001f;
-            imu_update_last_us = now_us;
-            IMU_Attitude_SetStaticBiasEnable(1U);
-            IMU_Attitude_Update(dt);
-        }
-
-        if ((imu_status == ICM42688_NO_ERROR) &&
-            ((uint32_t)(now_us - euler_vofa_last_us) >= EULER_VOFA_PERIOD_US)) {
-            euler_vofa_last_us = now_us;
-            Vofa_SendEulerFireWater(&IMU_Attitude);
-        }
-
-        if ((uint32_t)(now_ms - gray_last_ms) >= GRAY_UPDATE_PERIOD_MS) {
-            gray_last_ms = now_ms;
-            GraySensorDataUpdate(car.GraySensor_t);
-        }
-
-        if ((uint32_t)(now_ms - lcd_last_ms) >= 50U) {
-            lcd_last_ms = now_ms;
-            LCD_DebugUpdate(car);
-        }
-#else
         if (imuflag) {
             imuflag = 0;
-            duty_100hz();
+            duty_imu_50hz();
         }
 
         if (controlflag) {
@@ -146,6 +97,5 @@ int main(void)
             GraySensorDataUpdate(car.GraySensor_t);
             LCD_DebugUpdate(car);
         }
-#endif
     }
 }
